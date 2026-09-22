@@ -81,7 +81,7 @@ while true; do
   fi
   
   # Si el servidor colapsa antes de tiempo, romper el loop
-  if ! tmux has-session -t terraria 2>/devnull; then
+  if ! tmux has-session -t terraria 2>/dev/null; then
     echo "==> El proceso de Terraria se cerró inesperadamente."
     break
   fi
