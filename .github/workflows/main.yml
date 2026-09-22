@@ -1,0 +1,92 @@
+name: Terraria Dedicated Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime_minutes:
+        description: "Minutos de ejecución"
+        required: true
+        default: 335
+        type: number
+      enable_ssh:
+        description: "Abrir SSH temporal con tmate"
+        required: true
+        default: false
+        type: boolean
+
+  schedule:
+    # Ajusta según la hora en que quieres que inicie el loop automático
+    - cron: "0 18 * * *"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: terraria-server
+  cancel-in-progress: false
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+
+    env:
+      PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
+      RCLONE_CONF_CONTENT: ${{ secrets.RCLONE_CONF }}
+      REMOTE_BUCKET: ${{ vars.REMOTE_BUCKET || 'oracle-s3:terraria-bucket/worlds' }}
+      WORLD_NAME: ${{ vars.WORLD_NAME || 'MiMundoMaestro' }}
+      PLAYIT_IMAGE: ${{ vars.PLAYIT_IMAGE || 'ghcr.io/playit-cloud/playit-agent:0.17.1' }}
+      RUNTIME_MINUTES: ${{ github.event_name == 'workflow_dispatch' && inputs.runtime_minutes || 335 }}
+
+    steps:
+      - name: Reservar margen para el cierre y guardado en S3
+        run: |
+          echo "RUN_DEADLINE_EPOCH=$(($(date +%s) + ${RUNTIME_MINUTES} * 60))" >> "$GITHUB_ENV"
+
+      - name: Obtener código del repositorio
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Instalar dependencias del sistema y Mono
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mono-complete unzip wget rclone tmux
+          docker pull "$PLAYIT_IMAGE"
+
+      - name: Configurar rclone (Oracle S3)
+        run: |
+          install -d -m 700 ~/.config/rclone
+          umask 077
+          printf '%s\n' "$RCLONE_CONF_CONTENT" > ~/.config/rclone/rclone.conf
+
+      - name: Abrir SSH temporal gratis con tmate
+        id: tmate
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_ssh }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+          limit-access-to-actor: true
+
+      - name: Ejecutar Servidor de Terraria
+        env:
+          TMATE_SSH_COMMAND: ${{ steps.tmate.outputs.ssh-command }}
+        run: |
+          if [[ -n "$TMATE_SSH_COMMAND" ]]; then
+            echo "::notice title=SSH tmate activo::$TMATE_SSH_COMMAND"
+            echo "SSH tmate activo: $TMATE_SSH_COMMAND"
+          fi
+
+          chmod +x ./scripts/run-server.sh
+          ./scripts/run-server.sh
+
+      - name: Iniciar segunda ejecución (Auto-loop)
+        if: ${{ success() && github.event_name == 'schedule' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run terraria.yml \
+            --ref main \
+            -f runtime_minutes=335 \
+            -f enable_ssh=false
