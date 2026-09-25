@@ -86,7 +86,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run terraria.yml \
+          gh workflow run "$GITHUB_WORKFLOW" \
             --ref main \
             -f runtime_minutes=335 \
             -f enable_ssh=false
