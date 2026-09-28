@@ -16,7 +16,7 @@ on:
 
   schedule:
     # Ajusta según la hora en que quieres que inicie el loop automático
-    - cron: "0 14 * * *"
+    - cron: "36 13 * * *"
 
 permissions:
   contents: read
