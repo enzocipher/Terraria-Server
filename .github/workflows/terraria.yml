@@ -1,4 +1,4 @@
-name: Terraria Dedicated Server
+timezone: 'America/Lima'name: Terraria Dedicated Server
 
 on:
   workflow_dispatch:
@@ -16,7 +16,8 @@ on:
 
   schedule:
     # Ajusta según la hora en que quieres que inicie el loop automático
-    - cron: "36 13 * * *"
+    - cron: "30 8 * * *"
+      timezone: 'America/Lima'
 
 permissions:
   contents: read
