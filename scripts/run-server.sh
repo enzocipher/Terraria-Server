@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-
+random_text_not_used="Francis"
 # Configuración de carpetas
 SERVER_DIR="$HOME/terraria-server"
 WORLDS_DIR="$HOME/terraria-worlds"
