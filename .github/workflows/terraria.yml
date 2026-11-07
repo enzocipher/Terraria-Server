@@ -36,7 +36,7 @@ jobs:
       PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
       RCLONE_CONF_CONTENT: ${{ secrets.RCLONE_CONF }}
       REMOTE_BUCKET: ${{ vars.REMOTE_BUCKET || 'terraria:terraria' }}
-      WORLD_NAME: ${{ vars.WORLD_NAME }}
+      WORLD_NAME: ${{ secrets.WORLD_NAME }}
       PLAYIT_IMAGE: ${{ vars.PLAYIT_IMAGE || 'ghcr.io/playit-cloud/playit-agent:0.17.1' }}
       RUNTIME_MINUTES: ${{ github.event_name == 'workflow_dispatch' && inputs.runtime_minutes || 335 }}
 
